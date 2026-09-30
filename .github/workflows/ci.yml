@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest -v
+
+  docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v5
+
+      - name: Build image
+        run: docker build -t pdf-to-json .
+
+      - name: Smoke test
+        run: |
+          docker run -d --name app -p 8000:8000 pdf-to-json
+          for i in $(seq 1 10); do
+            curl -fs http://localhost:8000/health && exit 0
+            sleep 1
+          done
+          docker logs app
+          exit 1
