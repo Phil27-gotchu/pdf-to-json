@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>PDF to JSON</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    pre { background: #f4f4f4; padding: 1rem; overflow: auto; max-height: 60vh; }
+  </style>
+</head>
+<body>
+  <h1>PDF to JSON</h1>
+  <form id="form">
+    <input type="file" name="pdf" accept="application/pdf" required>
+    <button type="submit">Convert</button>
+  </form>
+  <p id="status"></p>
+  <pre id="output" hidden></pre>
+  <a id="download" hidden>Download JSON</a>
+
+  <script>
+    const form = document.getElementById("form");
+    const status = document.getElementById("status");
+    const output = document.getElementById("output");
+    const download = document.getElementById("download");
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      status.textContent = "Converting...";
+      output.hidden = download.hidden = true;
+
+      const response = await fetch("/convert", { method: "POST", body: new FormData(form) });
+      const data = await response.json();
+
+      if (!response.ok) {
+        status.textContent = data.error;
+        return;
+      }
+      const json = JSON.stringify(data, null, 2);
+      status.textContent = "";
+      output.textContent = json;
+      download.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+      download.download = data.source.replace(/\.pdf$/i, "") + ".json";
+      output.hidden = download.hidden = false;
+    });
+  </script>
+</body>
+</html>
