@@ -1,4 +1,4 @@
-A simple converter of pdf files into json format
+A simple converter of pdf files into json format.
 
 
 
